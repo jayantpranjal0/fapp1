@@ -1,7 +1,5 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../firebase_options.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({Key? key}) : super(key: key);
@@ -30,72 +28,69 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: const Text('LogIn'),
-        ),
-        body: FutureBuilder(
-            future: Firebase.initializeApp(
-              options: DefaultFirebaseOptions.currentPlatform,
+    appBar: AppBar(
+      title: const Text('Login'),
+    ),
+    body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                    enableSuggestions: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      hintText: 'Enter your email',
+                    )),
+                TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    autocorrect: false,
+                    enableSuggestions: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Password',
+                      hintText: 'Enter your password',
+                    )),
+                ElevatedButton(
+                  onPressed: () async {
+                    final emailController = _emailController.text;
+                    final passwordController = _passwordController.text;
+                    late final UserCredential userCredential;
+                    try {
+                      userCredential = await FirebaseAuth.instance
+                          .signInWithEmailAndPassword(
+                              email: emailController,
+                              password: passwordController);
+                      print(userCredential);
+                    } on FirebaseAuthException catch (e) {
+                      if (e.code == 'user-not-found') {
+                        print('No user found for that email.');
+                      } else if (e.code == 'wrong-password') {
+                        print('Wrong password provided for that user.');
+                      } else {
+                        print('Something went wrong $e.code');
+                      }
+                    }
+                  },
+                  child: const Text('Log In'),
+                ),
+                Row(
+                  children: [
+                    const Text('Don\'t have an account?'),
+                    TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/register', (route) => false);
+                        },
+                        child: const Text('Register')),
+                  ],
+                )
+              ],
             ),
-            builder: (context, snapshot) {
-              switch (snapshot.connectionState) {
-                case ConnectionState.done:
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          TextField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              autocorrect: false,
-                              enableSuggestions: true,
-                              decoration: InputDecoration(
-                                labelText: 'Email',
-                                hintText: 'Enter your email',
-                              )),
-                          TextField(
-                              controller: _passwordController,
-                              obscureText: true,
-                              autocorrect: false,
-                              enableSuggestions: true,
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                hintText: 'Enter your password',
-                              )),
-                          ElevatedButton(
-                            onPressed: () async {
-                              final emailController = _emailController.text;
-                              final passwordController =
-                                  _passwordController.text;
-                              late final userCredential;
-                              try {
-                                userCredential = await FirebaseAuth.instance
-                                    .signInWithEmailAndPassword(
-                                        email: emailController,
-                                        password: passwordController);
-                                print(userCredential);
-                              } on FirebaseAuthException catch (e) {
-                                if (e.code == 'user-not-found') {
-                                  print('No user found for that email.');
-                                } else if (e.code == 'wrong-password') {
-                                  print('Wrong password provided for that user.');
-                                }
-                                else{
-                                  print('Something went wrong $e.code');
-                                }
-                              }
-                            },
-                            child: const Text('Log In'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                default:
-                  return const Center(child: CircularProgressIndicator());
-              }
-            }),
-      );
+          ),
+        ),
+  );
 }
