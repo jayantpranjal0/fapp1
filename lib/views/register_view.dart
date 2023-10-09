@@ -1,6 +1,8 @@
+import 'package:fapp1/constants/routes.dart';
+import 'package:fapp1/utilities/showErrorDialog.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:developer' as devtools show log;
+
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
 
@@ -57,22 +59,41 @@ class _RegisterViewState extends State<RegisterView> {
                     final emailController = _emailController.text;
                     final passwordController = _passwordController.text;
                     // ignore: unused_local_variable
-                    late final UserCredential userCredential;
                     try {
-                      userCredential = await FirebaseAuth.instance
+                      await FirebaseAuth.instance
                           .createUserWithEmailAndPassword(
                               email: emailController,
                               password: passwordController);
+                      final user = FirebaseAuth.instance.currentUser;
+                      await user?.sendEmailVerification();
+                      Navigator.of(context).pushNamed(verifyEmailRoute);
                     } on FirebaseAuthException catch (e) {
                       if (e.code == 'weak-password') {
-                        devtools.log('Weak Password');
+                        showErrorDialog(
+                          context,
+                          "Weak Password",
+                        );
                       } else if (e.code == 'email-already-in-use') {
-                        devtools.log('Email already in use');
+                        showErrorDialog(
+                          context,
+                          "Email already in use",
+                        );
                       } else if (e.code == 'invalid-email') {
-                        devtools.log('Invalid Email');
+                        showErrorDialog(
+                          context,
+                          "Invalid Email",
+                        );
                       } else {
-                        devtools.log('Something unexpected happened $e.code');
+                        showErrorDialog(
+                          context,
+                          e.toString(),
+                        );
                       }
+                    } catch (e) {
+                      showErrorDialog(
+                        context,
+                        e.toString(),
+                      );
                     }
                   },
                   child: const Text('Sign Up'),
@@ -83,7 +104,7 @@ class _RegisterViewState extends State<RegisterView> {
                     TextButton(
                         onPressed: () {
                           Navigator.of(context).pushNamedAndRemoveUntil(
-                              '/login', (route) => false);
+                              loginRoute, (route) => false);
                         },
                         child: const Text('Login ')),
                   ],
